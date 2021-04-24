@@ -1,5 +1,6 @@
 import os
 import functools 
+import asyncio
 
 from discord.ext import commands
 import discord
@@ -23,6 +24,8 @@ defalt_intent.members = True
 
 admin_role_name = "admin"
 
+muted = []
+
 
 game_pendu = None  # stoke l'objet pendu lorsqu'une partie est en cours
 
@@ -35,7 +38,7 @@ class Bot (commands.Bot):
 
     
     #@bot.event
-    async def on_reaction_add(self,reaction,user):# reaction ajoutés
+    async def on_reaction_add(self,reaction,user):# reaction ajoutés 
 
         print("readtion add by : " , user.name)
         
@@ -107,7 +110,7 @@ async def command_by_admin(ctx):
     else:
         return True
   
-def command_admin(func):
+def command_admin(func):  
     """decorateur qui verifie si la personne qui fais un commande est un admin
     Returns:
         [func] -- [nouvelle fonction avec la command uniquement si il a les drois]
@@ -141,7 +144,22 @@ async def say_hi(ctx):#say hi
     await ctx.channel.send(embed = em, delete_after = 5)
     await channel.send(f"bonjour a toi {author}", delete_after = 5)
 
+@bot.command(name = "kill")
+async def kill( ctx, mention : discord.Member):
+    guild = ctx.guild
+    mutedRole = discord.utils.get(guild.roles, name="muted")
 
+    if not mutedRole:
+        mutedRole = await guild.create_role(name="muted")
+
+        for channel in guild.channels:
+            await channel.set_permissions(mutedRole, speak=False, send_messages=False, read_message_history=True, read_messages=True)
+    embed = discord.Embed(title="muted", description=f"{mention.mention} was muted ", colour=discord.Colour.light_gray())
+    await ctx.send(embed=embed)
+    await mention.add_roles(mutedRole)
+    await asyncio.sleep(100)
+    await mention.remove_roles(discord.utils.get(ctx.guild.roles, name="muted")) 
+    await argent.paye(ctx, mention, 50)
     
 # commande du sondage   
 @bot.command(name = "sondage")
@@ -232,8 +250,28 @@ async def del_role( ctx,name):
             if role.name == name:
                 await role.delete()
                 em_del = discord.Embed(description = f"le role : {role.name} a bien été suprimé", color = 0xff0000)
-                await ctx.channel.send(embed = em_del)  
+                await ctx.channel.send(embed = em_del) 
                 
+@bot.command(name = "mute")
+@command_admin
+async def mute(ctx, mention : discord.Member):
+    guild = ctx.guild
+    mutedRole = discord.utils.get(guild.roles, name="muted")
+
+    if not mutedRole:
+        mutedRole = await guild.create_role(name="muted")
+
+        for channel in guild.channels:
+            await channel.set_permissions(mutedRole, speak=False, send_messages=False, read_message_history=True, read_messages=True)
+    embed = discord.Embed(title="muted", description=f"{mention.mention} was muted ", colour=discord.Colour.light_gray())
+    await ctx.send(embed=embed)
+    await mention.add_roles(mutedRole)
+
+
+@bot.command(name = "unmute")
+@command_admin
+async def unmute(ctx, mention : discord.Member):
+    await mention.remove_roles(discord.utils.get(ctx.guild.roles, name="muted"))                
 
 @bot.command(name='del')
 async def delete( ctx):#delete all the message of a channel
