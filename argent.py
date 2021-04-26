@@ -121,8 +121,10 @@ async def paye(ctx, mention, amount):
                             description = f"vous avez maintenant : {argent_author -amount} $")
         else:
             await em_error(ctx,f"vous n'avez pas l'argent pour payer {amount} $")
+            
     except Exception as e :
         await em_error(ctx, e)    
+        return False
         
         
 async def steal(ctx, user, amount):

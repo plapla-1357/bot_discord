@@ -2,7 +2,7 @@
 
 
 ## token du bot
-pour faire fonctioner le bot il faut rajouter un dossier : 
+pour faire fonctioner le bot il faut rajouter un fichier : 
   - config
     et mettre dedans :
       - TOKEN=votreToken
