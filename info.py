@@ -85,8 +85,15 @@ async def em_call_back(ctx,title, description = ""):
     await ctx.channel.send(embed = em_callback)
     print("[call back]reussi :", title, "\n", description)
     
-async def em_jail(ctx):
-    em_prison = discord.Embed(title = "voler c'est mal" , description = "aller en prison", color = 0x051f91)
+async def em_jail(ctx, user = None):
+    if user == None:
+        em_prison = discord.Embed(title = "voler c'est mal" , 
+                                description = "aller en prison", 
+                                color = 0x051f91)
+    else: 
+        em_prison = discord.Embed(title = "voler c'est mal"  , 
+                                description = user.mention+": aller directement en prison, \n ne passez pas par la case depart", 
+                                color = 0x051f91)
     file = discord.File("prisoner.png", filename = "prisoner.png")
     em_prison.set_thumbnail(url = "attachment://prisoner.png")
     await ctx.channel.send(embed =em_prison, file = file)

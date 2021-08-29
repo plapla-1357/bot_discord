@@ -112,6 +112,22 @@ def show_table(row = None, connection = None,cursor = None):
             print(row)
     elif type(row) == list:
         pass
+   
+@connect 
+def add_item(table_name, values, auto_increment_id, connection = None,cursor = None):
+    """add_item in a databose
+
+    Arguments:
+        table_name {str} -- nom de la table
+        values {tuple} -- value a asigner pour chaques colones
+        auto_increment_id {bool} -- if we add an auto_increment id in the tuple
+    """
+    if auto_increment_id :
+        values = (cursor.lastrowid,) + values
+    print(values)
+    cursor.execute(f"INSERT INTO {table_name} VALUES({'?'+',?'*(len(values)-1)})", values)
+    connection.commit()
+    
         
         
           

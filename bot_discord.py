@@ -183,12 +183,21 @@ async def execute( ctx, code : str):
     await python_ececute.execute(ctx.channel,code,ctx.author)
     
 @bot.command(name = "steal")
-async def steal(ctx , user : discord.User , amount):
-    await argent.steal(ctx, user,amount)
+async def steal(ctx , user : discord.Member):
+    await argent.steal(ctx, user)
+    
+@bot.command(name="catch")
+async def catch(ctx, user : discord.Member):
+    print("catch")
+    await argent.catch(ctx, user)
 
 @bot.command(name = "bank") 
 async def show_money(ctx):
     await argent.show_money(ctx)
+    
+@bot.command(name = "bank_of") 
+async def show_money(ctx, user:discord.User):
+    await argent.show_money_of(ctx, user)
     
 @bot.command(name = "top_list")
 async def top_list( ctx):
@@ -269,7 +278,6 @@ async def mute(ctx, mention : discord.Member):
 
 
 @bot.command(name = "unmute")
-@command_admin
 async def unmute(ctx, mention : discord.Member):
     await mention.remove_roles(discord.utils.get(ctx.guild.roles, name="muted"))                
 

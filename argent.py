@@ -1,5 +1,8 @@
 from random import randint
 import ast
+import asyncio
+import time
+
 
 import discord
 
@@ -24,6 +27,19 @@ async def show_money(ctx):
     argent = int(argent[0])
     em_money = discord.Embed(title = "🏦 __Compte en banque__ 💰" ,
                              description = f"{ctx.author.display_name} a : **{argent}** $",
+                             color = 0x24c6c8)
+    em_money.set_thumbnail(url = ctx.author.avatar_url)
+    await ctx.channel.send(embed = em_money)
+
+async def show_money_of(ctx, user):
+    argent_par_default = 500
+    argent = db.search("argent_user", "id_discord", user.id, "argent")
+    if not argent:
+        db.add_user(user.id, argent_par_default)
+        argent = (argent_par_default,)
+    argent = int(argent[0])
+    em_money = discord.Embed(title = "🏦 __Compte en banque__ 💰" ,
+                             description = f"{user.display_name} a : **{argent}** $",
                              color = 0x24c6c8)
     em_money.set_thumbnail(url = ctx.author.avatar_url)
     await ctx.channel.send(embed = em_money)
@@ -125,9 +141,83 @@ async def paye(ctx, mention, amount):
     except Exception as e :
         await em_error(ctx, e)    
         return False
+    
+is_catch = {} # tuple (user, bool)
+async def catch(ctx, stealer):
+    global is_catch
+    if stealer in is_catch:
+        print(stealer.name , " part en prison")
+        is_catch[stealer] = True
+        await em_jail(ctx, user = stealer)
+        del is_catch[stealer]
+    else:
+        await em_error(ctx, 
+                       "cette personne n'est pas un vouleur (pour le moment)")
+        
+def add_steal_in_db(id, steal_time: float):
+    table_name = "steal_history"
+    time_last_steal = db.search(table_name, "id_discord", id, "time_last_steal")
+    if time_last_steal == None:
+        db.add_item(table_name, (id, steal_time), True)
+        return True
+    elif time_last_steal[0] + 3_600 <= time.time(): # 1 heure de delais entre chaques voles
+        db.update_value(table_name, 
+                        "time_last_steal",
+                        float(time.time()),
+                        "id_discord",
+                        id)
+        return True
+    else:
+        return False
         
         
-async def steal(ctx, user, amount):
-    await em_jail(ctx)
+    
         
         
+async def steal(ctx, user):
+    """steal money
+
+    Arguments:
+        ctx {context} -- ...
+        user {discord.User} -- user who lose his money
+    """
+    if ctx.message.author == user:
+        await em_error(ctx, "vous ne pouvez pas vous voulez vous même")
+        return None
+    
+    success = add_steal_in_db(ctx.message.author.id, time.time())
+    if success:
+        global is_catch
+        rand_int_try = randint(1, 10)
+        if rand_int_try != 5:
+            print("stealing")
+            amount = randint(1, 100)
+            await em_call_back(ctx, ctx.message.author.name + " a voler de l'argent a : " + user.name,
+                            description=user.mention + "fait la command !catch " + ctx.message.author.mention +" pour l'envoyer en prison") #todo finish taht
+            is_catch[ctx.message.author] = False
+            await asyncio.sleep(60) 
+            try:
+                catch = is_catch[ctx.message.author]
+            except KeyError:
+                catch = True
+            if not catch : 
+                await em_call_back(ctx, ctx.message.author.name+ " a reussi son vole, il gagne donc "+ amount+ "€")
+                # steal money
+                
+                # todo verifier que l'argent ne passe pas en negatif
+                if db.search("argent_user", "id_discord", user.id, "argent")-amount >=0:
+                    db.add_money(user.id, -amount) # retirer l'argent
+                    db.add_money(ctx.message.author.id, amount)
+                else:
+                    print(user.name, "a eu les yeux plus gros que le ventre")
+                    await em_error(ctx, "la personne que vous vollez n'as pas asser d'argent")
+            else:
+                return None
+        else: 
+            print(ctx.message.author.name, " a rater son vole, il part en prison")   
+            await em_jail(ctx)
+            db.update_value("steal_history", "time_last_steal", 0, "id_discord", ctx.message.author.name)
+    else:
+        await em_error(ctx, "vous devez vous reposer au moins 1h entre chaques voles")
+            
+            
